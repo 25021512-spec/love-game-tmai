@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Super Love World - Happy Birthday!</title>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #2b0f1e;
+      font-family: 'VT323', monospace;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    #game-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      border: 6px solid #ff7eb9;
+      box-shadow: 0 0 30px rgba(255, 105, 180, 0.6);
+      background: #ffd1e8;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      image-rendering: pixelated;
+    }
+    #hud {
+      position: absolute;
+      top: 12px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 24px;
+      color: #880e4f;
+      text-shadow: 2px 2px 0px #fff;
+      pointer-events: none;
+      z-index: 5;
+    }
+    #modal {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 86%;
+      max-width: 520px;
+      background: #fff0f6;
+      border: 4px solid #d81b60;
+      box-shadow: 6px 6px 0px #880e4f;
+      padding: 24px;
+      text-align: center;
+      color: #880e4f;
+      z-index: 20;
+    }
+    #modal h2 {
+      font-size: 28px;
+      color: #d81b60;
+      margin-top: 0;
+      line-height: 1.3;
+    }
+    #modal p {
+      font-size: 22px;
+      line-height: 1.5;
+      margin: 16px 0;
+      color: #4a0e2e;
+    }
+    .pixel-btn {
+      background: #ff4081;
+      color: #fff;
+      border: 3px solid #880e4f;
+      box-shadow: 3px 3px 0px #880e4f;
+      padding: 10px 20px;
+      font-family: 'VT323', monospace;
+      font-size: 24px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .pixel-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #880e4f;
+    }
+    #start-screen {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 182, 217, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      z-index: 15;
+    }
+    #start-screen h1 {
+      font-size: 42px;
+      color: #c2185b;
+      text-shadow: 3px 3px 0 #fff;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+    #start-screen p {
+      font-size: 22px;
+      color: #880e4f;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    #touch-controls {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 800px;
+      padding: 12px 16px;
+      background: #3d142a;
+      border-radius: 0 0 8px 8px;
+    }
+    .dpad {
+      display: flex;
+      gap: 12px;
+    }
+    .ctrl-btn {
+      width: 54px;
+      height: 54px;
+      background: #ff80ab;
+      border: 3px solid #fff;
+      border-radius: 8px;
+      color: #880e4f;
+      font-family: 'VT323', monospace;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 0 #c2185b;
+      cursor: pointer;
+    }
+    .ctrl-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #c2185b;
+    }
+    .jump-btn {
+      width: 90px;
+      font-size: 22px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-wrapper">
+    <div id="hud">
+      <div>TIM: <span id="score">0</span></div>
+      <div>WORLD: 1-1 LOVE</div>
+      <div>KY NIEM: <span id="mem-count">0</span>/3</div>
+    </div>
+
+    <div id="start-screen">
+      <h1>SUPER LOVE WORLD<br>★ 90s EDITION ★</h1>
+      <p>Húc vào các khối [?] để mở khóa kỷ niệm<br>và tiến về Lâu Đài Sinh Nhật nhé!</p>
+      <button class="pixel-btn" onclick="startGame()">BẮT ĐẦU CHƠI ♥</button>
+    </div>
+
+    <div id="modal">
+      <h2 id="modal-title">KỶ NIỆM #1</h2>
+      <p id="modal-text">Nội dung lời nhắn...</p>
+      <button class="pixel-btn" id="modal-btn" onclick="closeModal()">TIẾP TỤC ♥</button>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="420"></canvas>
+  </div>
+
+  <div id="touch-controls">
+    <div class="dpad">
+      <button class="ctrl-btn" id="btn-left">◀</button>
+      <button class="ctrl-btn" id="btn-right">▶</button>
+    </div>
+    <button class="ctrl-btn jump-btn" id="btn-jump">NHẢY</button>
+  </div>
+
+  <script>
+    const CONFIG = {
+      loverName: "Công Chúa Của Anh",
+      memories: [
+        {
+          title: "CỘT MỐC #1: LẦN ĐẦU",
+          text: "Lần đầu khi quyết định tiến đến mối quan hệ này, anh đã thấy nhiều điều thay đổi"
+        },
+        {
+          title: "CỘT MỐC #2: ĐỒNG HÀNH",
+          text: "Cảm ơn em đã chọn tin tưởng anh"
+        },
+        {
+          title: "CỘT MỐC #3: ĐIỀU ANH MUỐN NÓI",
+          text: "Cùng nhau cố gắng nhé bé yêu!"
+        }
+      ],
+      finalTitle: "CHÚC MỪNG SINH NHẬT EM! 🎂",
+      finalMessage: "Chúc tuổi mới của em luôn rạng rỡ, xinh đẹp và hạnh phúc như một nàng công chúa. Anh yêu em rất nhiều! (Hãy mở hộp quà thật ngoài đời nhé ♥)"
+    };
+
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+
+    function playTone(freq, type, duration, delay = 0) {
+      try {
+        if (!audioCtx) audioCtx = new AudioCtx();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + duration);
+      } catch(e) {}
+    }
+
+    function sfxJump() {
+      playTone(320, 'square', 0.1);
+      playTone(520, 'square', 0.15, 0.06);
+    }
+    function sfxCoin() {
+      playTone(987, 'square', 0.08);
+      playTone(1318, 'square', 0.25, 0.08);
+    }
+    function sfxBlock() {
+      playTone(220, 'triangle', 0.1);
+      playTone(660, 'square', 0.2, 0.08);
+    }
+    function sfxHurt() {
+      playTone(300, 'sawtooth', 0.15);
+      playTone(180, 'sawtooth', 0.25, 0.12);
+    }
+    function sfxWin() {
+      const notes = [
+        [262, 0.2, 0], [262, 0.2, 0.25], [294, 0.4, 0.5], [262, 0.4, 0.95],
+        [349, 0.4, 1.4], [330, 0.7, 1.85],
+        [262, 0.2, 2.7], [262, 0.2, 2.95], [294, 0.4, 3.2], [262, 0.4, 3.65],
+        [392, 0.4, 4.1], [349, 0.8, 4.55]
+      ];
+      notes.forEach(([f, d, t]) => playTone(f, 'square', d, t));
+    }
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let gameStarted = false;
+    let gamePaused = false;
+    let gameWon = false;
+    let score = 0;
+    let memoriesUnlocked = 0;
+    let cameraX = 0;
+    let fireworks = [];
+
+    const keys = { left: false, right: false };
+
+    const player = {
+      x: 80, y: 280, w: 28, h: 32,
+      vx: 0, vy: 0, speed: 4.2, jumpPower: -11.0,
+      grounded: false, facing: 1, frame: 0
+    };
+
+    const gravity = 0.5;
+    const levelWidth = 2600;
+
+    const platforms = [
+      { x: 0, y: 360, w: 680, h: 60 },
+      { x: 760, y: 360, w: 620, h: 60 },
+      { x: 1460, y: 360, w: 1140, h: 60 },
+      { x: 300, y: 250, w: 120, h: 24 },
+      { x: 920, y: 240, w: 150, h: 24 },
+      { x: 1620, y: 250, w: 120, h: 24 }
+    ];
+
+    const questionBlocks = [
+      { x: 345, y: 250, w: 30, h: 24, hit: false, memIndex: 0, bounceY: 0 },
+      { x: 980, y: 240, w: 30, h: 24, hit: false, memIndex: 1, bounceY: 0 },
+      { x: 1665, y: 250, w: 30, h: 24, hit: false, memIndex: 2, bounceY: 0 }
+    ];
+
+    let hearts = [
+      { x: 200, y: 310, collected: false },
+      { x: 240, y: 310, collected: false },
+      { x: 350, y: 200, collected: false },
+      { x: 520, y: 310, collected: false },
+      { x: 710, y: 260, collected: false },
+      { x: 950, y: 190, collected: false },
+      { x: 1020, y: 190, collected: false },
+      { x: 1200, y: 310, collected: false },
+      { x: 1410, y: 260, collected: false },
+      { x: 1670, y: 200, collected: false },
+      { x: 1900, y: 310, collected: false },
+      { x: 1950, y: 310, collected: false }
+    ];
+
+    const enemies = [
+      { x: 480, y: 332, w: 28, h: 28, minX: 420, maxX: 620, vx: 1.3 },
+      { x: 1120, y: 332, w: 28, h: 28, minX: 1020, maxX: 1300, vx: -1.5 },
+      { x: 1850, y: 332, w: 28, h: 28, minX: 1750, maxX: 2050, vx: 1.6 }
+    ];
+
+    const castle = { x: 2280, y: 200, w: 140, h: 160 };
+
+    // Xử lý sự kiện bàn phím an toàn (tránh kẹt phím)
+    window.addEventListener('keydown', e => {
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+      if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+      if (e.code === 'ArrowUp' || e.code === 'Space' || e.code === 'KeyW') {
+        if (player.grounded && gameStarted && !gamePaused) {
+          player.vy = player.jumpPower;
+          player.grounded = false;
+          sfxJump();
+        }
+      }
+    });
+
+    window.addEventListener('keyup', e => {
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+      if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+    });
+
+    // Xử lý nút bấm cảm ứng (Mobile / Click chuột)
+    function bindTouch(id, actionPress, actionRelease) {
+      const btn = document.getElementById(id);
+      const start = (e) => { e.preventDefault(); actionPress(); };
+      const end = (e) => { e.preventDefault(); if (actionRelease) actionRelease(); };
+      btn.addEventListener('touchstart', start, {passive: false});
+      btn.addEventListener('touchend', end, {passive: false});
+      btn.addEventListener('mousedown', start);
+      btn.addEventListener('mouseup', end);
+    }
+
+    bindTouch('btn-left', () => keys.left = true, () => keys.left = false);
+    bindTouch('btn-right', () => keys.right = true, () => keys.right = false);
+    bindTouch('btn-jump', () => {
+      if (player.grounded && gameStarted && !gamePaused) {
+        player.vy = player.jumpPower;
+        player.grounded = false;
+        sfxJump();
+      }
+    });
+
+    function startGame() {
+      document.getElementById('start-screen').style.display = 'none';
+      gameStarted = true;
+      sfxCoin();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function openModal(title, text, isFinal = false) {
+      gamePaused = true;
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-text').innerText = text;
+      const btn = document.getElementById('modal-btn');
+      if (isFinal) {
+        btn.innerText = "CHƠI LẠI ♥";
+        btn.onclick = () => location.reload();
+      } else {
+        btn.innerText = "TIẾP TỤC ♥";
+        btn.onclick = closeModal;
+      }
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+      gamePaused = false;
+      keys.left = false;
+      keys.right = false;
+    }
+
+    function drawPixelHeart(x, y, size, color = '#ff1744') {
+      ctx.fillStyle = color;
+      const s = size / 5;
+      const pattern = [
+        [0,1,0,1,0],
+        [1,1,1,1,1],
+        [1,1,1,1,1],
+        [0,1,1,1,0],
+        [0,0,1,0,0]
+      ];
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          if (pattern[r][c]) {
+            ctx.fillRect(x + c * s, y + r * s, s, s);
+          }
+        }
+      }
+    }
+
+    function drawPlayer(px, py) {
+      ctx.fillStyle = '#e91e63';
+      ctx.fillRect(px + 4, py, 20, 6);
+      ctx.fillRect(px + 2, py + 4, 24, 4);
+      ctx.fillStyle = '#ffccbc';
+      ctx.fillRect(px + 6, py + 8, 16, 10);
+      ctx.fillStyle = '#4a0e2e';
+      ctx.fillRect(player.facing === 1 ? px + 16 : px + 8, py + 10, 3, 4);
+      ctx.fillStyle = '#ff4081';
+      ctx.fillRect(px + 4, py + 18, 20, 10);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(px + 8, py + 20, 3, 3);
+      ctx.fillRect(px + 17, py + 20, 3, 3);
+      ctx.fillStyle = '#880e4f';
+      const step = Math.sin(player.frame * 0.3) * 3;
+      ctx.fillRect(px + 4, py + 28 + (player.vx !== 0 ? step : 0), 8, 4);
+      ctx.fillRect(px + 16, py + 28 - (player.vx !== 0 ? step : 0), 8, 4);
+    }
+
+    function drawBackground() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#ffb6d9');
+      grad.addColorStop(1, '#ffe6f2');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#fff5f9';
+      for (let i = 0; i < 10; i++) {
+        const cx = (i * 320 - cameraX * 0.4) % (levelWidth);
+        const cy = 50 + (i % 3) * 35;
+        ctx.fillRect(cx, cy, 60, 18);
+        ctx.fillRect(cx + 12, cy - 10, 36, 12);
+      }
+
+      ctx.fillStyle = '#f8bbd0';
+      for (let i = 0; i < 8; i++) {
+        const hx = i * 420 - cameraX * 0.6;
+        ctx.beginPath();
+        ctx.moveTo(hx, 360);
+        ctx.lineTo(hx + 110, 230);
+        ctx.lineTo(hx + 220, 360);
+        ctx.fill();
+      }
+    }
+
+    function update() {
+      if (!gameStarted || gamePaused) return;
+
+      if (keys.left) {
+        player.vx = -player.speed;
+        player.facing = -1;
+        player.frame++;
+      } else if (keys.right) {
+        player.vx = player.speed;
+        player.facing = 1;
+        player.frame++;
+      } else {
+        player.vx = 0;
+        player.frame = 0;
+      }
+
+      player.x += player.vx;
+      if (player.x < 0) player.x = 0;
+      if (player.x > levelWidth - player.w) player.x = levelWidth - player.w;
+
+      // Áp dụng trọng lực
+      player.vy += gravity;
+      player.y += player.vy;
+      player.grounded = false;
+
+      // Kiểm tra va chạm mặt đất chuẩn xác
+      for (let p of platforms) {
+        if (
+          player.x + player.w > p.x &&
+          player.x < p.x + p.w &&
+          player.y + player.h >= p.y &&
+          player.y + player.h - player.vy <= p.y + 12 &&
+          player.vy >= 0
+        ) {
+          player.y = p.y - player.h;
+          player.vy = 0;
+          player.grounded = true;
+        }
+      }
+
+      // Kiểm tra húc đầu vào khối [?]
+      for (let qb of questionBlocks) {
+        if (qb.bounceY < 0) qb.bounceY += 1;
+        if (
+          player.x + player.w > qb.x &&
+          player.x < qb.x + qb.w &&
+          player.y <= qb.y + qb.h &&
+          player.y - player.vy >= qb.y + qb.h - 8 &&
+          player.vy < 0
+        ) {
+          player.vy = 1;
+          qb.bounceY = -8;
+          sfxBlock();
+          if (!qb.hit) {
+            qb.hit = true;
+            memoriesUnlocked++;
+            document.getElementById('mem-count').innerText = memoriesUnlocked;
+          }
+          const mem = CONFIG.memories[qb.memIndex];
+          openModal(mem.title, mem.text);
+        }
+      }
+
+      // Rơi xuống hố -> hồi sinh an toàn
+      if (player.y > canvas.height + 50) {
+        sfxHurt();
+        player.x = Math.max(80, player.x - 140);
+        player.y = 180;
+        player.vy = 0;
+      }
+
+      // Ăn trái tim
+      for (let h of hearts) {
+        if (!h.collected &&
+          player.x + player.w > h.x &&
+          player.x < h.x + 20 &&
+          player.y + player.h > h.y &&
+          player.y < h.y + 20
+        ) {
+          h.collected = true;
+          score += 10;
+          document.getElementById('score').innerText = score;
+          sfxCoin();
+        }
+      }
+
+      // Quái vật nấm
+      for (let en of enemies) {
+        en.x += en.vx;
+        if (en.x <= en.minX || en.x >= en.maxX) en.vx *= -1;
+
+        if (
+          player.x + player.w > en.x + 4 &&
+          player.x < en.x + en.w - 4 &&
+          player.y + player.h > en.y + 4 &&
+          player.y < en.y + en.h
+        ) {
+          if (player.vy > 0 && player.y + player.h - player.vy <= en.y + 12) {
+            player.vy = -7;
+            en.x = -9999;
+            score += 20;
+            document.getElementById('score').innerText = score;
+            sfxCoin();
+          } else {
+            sfxHurt();
+            player.x = Math.max(80, player.x - 80);
+            player.vy = -5;
+          }
+        }
+      }
+
+      cameraX = Math.max(0, Math.min(player.x - 280, levelWidth - canvas.width));
+
+      if (!gameWon && player.x + player.w > castle.x + 40) {
+        gameWon = true;
+        sfxWin();
+        spawnFireworks();
+        setTimeout(() => {
+          openModal(CONFIG.finalTitle, CONFIG.finalMessage, true);
+        }, 1200);
+      }
+    }
+
+    function spawnFireworks() {
+      const colors = ['#ff1744', '#ff4081', '#f50057', '#ffea00', '#ffffff'];
+      for (let i = 0; i < 60; i++) {
+        fireworks.push({
+          x: castle.x + 70,
+          y: castle.y - 20,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.8) * 8,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          life: 90
+        });
+      }
+    }
+
+    function draw() {
+      drawBackground();
+
+      ctx.save();
+      ctx.translate(-cameraX, 0);
+
+      for (let p of platforms) {
+        ctx.fillStyle = '#ad1457';
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.fillStyle = '#ff4081';
+        ctx.fillRect(p.x, p.y, p.w, 10);
+        ctx.strokeStyle = '#880e4f';
+        ctx.lineWidth = 2;
+        for (let gx = p.x; gx < p.x + p.w; gx += 30) {
+          ctx.strokeRect(gx, p.y + 10, 30, p.h - 10);
+        }
+      }
+
+      for (let qb of questionBlocks) {
+        const by = qb.y + qb.bounceY;
+        ctx.fillStyle = qb.hit ? '#f48fb1' : '#ffca28';
+        ctx.fillRect(qb.x, by, qb.w, qb.h);
+        ctx.strokeStyle = '#880e4f';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(qb.x, by, qb.w, qb.h);
+
+        ctx.fillStyle = qb.hit ? '#880e4f' : '#d81b60';
+        ctx.font = 'bold 16px monospace';
+        ctx.fillText(qb.hit ? '♥' : '?', qb.x + 9, by + 18);
+      }
+
+      const floatOffset = Math.sin(Date.now() * 0.006) * 3;
+      for (let h of hearts) {
+        if (!h.collected) {
+          drawPixelHeart(h.x, h.y + floatOffset, 20, '#ff1744');
+        }
+      }
+
+      for (let en of enemies) {
+        if (en.x < 0) continue;
+        ctx.fillStyle = '#9c27b0';
+        ctx.fillRect(en.x, en.y, en.w, 16);
+        ctx.fillStyle = '#f3e5f5';
+        ctx.fillRect(en.x + 5, en.y + 4, 5, 5);
+        ctx.fillRect(en.x + 18, en.y + 4, 5, 5);
+        ctx.fillStyle = '#ffe0b2';
+        ctx.fillRect(en.x + 6, en.y + 16, 16, 12);
+      }
+
+      ctx.fillStyle = '#f06292';
+      ctx.fillRect(castle.x, castle.y + 40, castle.w, 120);
+      ctx.fillStyle = '#ec407a';
+      ctx.fillRect(castle.x + 30, castle.y, 80, 160);
+      ctx.fillStyle = '#4a0e2e';
+      ctx.fillRect(castle.x + 52, castle.y + 100, 36, 60);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(castle.x + 68, castle.y - 45, 4, 45);
+      drawPixelHeart(castle.x + 72, castle.y - 45, 22, '#ff1744');
+
+      ctx.fillStyle = '#880e4f';
+      ctx.font = '22px "VT323", monospace';
+      ctx.fillText("HAPPY BIRTHDAY!", castle.x - 20, castle.y - 52);
+
+      drawPlayer(player.x, player.y);
+
+      for (let f of fireworks) {
+        if (f.life > 0) {
+          ctx.fillStyle = f.color;
+          ctx.fillRect(f.x, f.y, 6, 6);
+          f.x += f.vx;
+          f.y += f.vy;
+          f.vy += 0.12;
+          f.life--;
+        }
+      }
+
+      ctx.restore();
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+  </script>
+</body>
+</html>
